@@ -261,6 +261,12 @@ def add_product(payload: AddProductRequest, vendor_id: int, db: Session = Depend
         )
         db.add(new_product)
         db.flush()  # To get the product_id
+        
+        # 2.5 Verify Warehouse exists
+        from backend.models import Warehouse
+        warehouse = db.query(Warehouse).filter(Warehouse.warehouse_id == payload.warehouse_id).first()
+        if not warehouse:
+            raise HTTPException(status_code=400, detail=f"Warehouse with ID {payload.warehouse_id} does not exist. Please provide a valid warehouse_id.")
 
         # 3. Initialize Stock
         ledger = InventoryLedger(
