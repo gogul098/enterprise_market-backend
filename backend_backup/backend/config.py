@@ -19,6 +19,6 @@ class Settings:
         os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440")
     )
     API_SECRET_KEY: str = os.getenv("API_SECRET_KEY", "")
-
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 settings = Settings()

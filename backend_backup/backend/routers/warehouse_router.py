@@ -9,6 +9,16 @@ router = APIRouter(prefix="/api/warehouse", tags=["Warehouse"])
 
 @router.get("/inventory-planning")
 def get_inventory_planning(warehouse_id: Optional[int] = None, db: Session = Depends(get_db)):
+    from backend.cache import get_cache, set_cache
+    
+    # We create a session-agnostic cache key because this data is globally the same
+    # but we can invalidate it globally when changes occur.
+    cache_key = f"inventory_planning_{warehouse_id}" if warehouse_id else "inventory_planning_all"
+    
+    cached_data = get_cache(cache_key)
+    if cached_data:
+        return cached_data
+
     try:
         # Fetch Warehouses
         if warehouse_id:
@@ -88,7 +98,9 @@ def get_inventory_planning(warehouse_id: Optional[int] = None, db: Session = Dep
                 "ai_insights": insights
             })
 
-        return {"success": True, "planning_data": planning_results}
+        response = {"success": True, "planning_data": planning_results}
+        set_cache(cache_key, response, ex=600)  # Optional 10 min fallback TTL
+        return response
     except Exception as e:
         return {"success": False, "message": str(e)}
 

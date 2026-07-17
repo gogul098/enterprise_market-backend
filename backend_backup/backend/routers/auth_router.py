@@ -8,6 +8,7 @@ from backend.database import get_db
 from backend.models import User, Role, AuditLog, Vendor
 from backend.schemas import SignupRequest, LoginRequest, AuthResponse
 from backend.auth import hash_password, verify_password, create_access_token
+from backend.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -104,3 +105,17 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         roles=[r.role_name for r in user.roles],
         access_token=token,
     )
+
+@router.post("/logout")
+def logout(current_user: User = Depends(get_current_user)):
+    """
+    Log out a user.
+    - Invalidates all cached data specific to this user in Redis.
+    """
+    from backend.cache import delete_cache_pattern
+    
+    # Flush all cached entries tied to this user's session
+    pattern = f"session:{current_user.user_id}:*"
+    delete_cache_pattern(pattern)
+    
+    return {"success": True, "message": "Successfully logged out and cache cleared."}
