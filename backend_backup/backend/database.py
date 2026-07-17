@@ -11,7 +11,7 @@ from backend.config import settings
 # ── Auto-Start SSH Tunnel for AWS RDS ────────────────────────────────────────
 db_url = settings.DATABASE_URL
 try:
-    db_host_ip = "13.201.224.132"
+    db_host_ip = "13.233.147.145"
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     pem_file = os.path.join(base_dir, 'LambdaFinancials.pem')
     
