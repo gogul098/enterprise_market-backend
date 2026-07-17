@@ -117,7 +117,7 @@ class ReviewOut(BaseModel):
 
 class VendorPerformanceOut(BaseModel):
     vendor_id: str
-    vendor_name: str
+    vendor_name: Optional[str] = None
     performance_score: Optional[float] = None
     letter_grade: str
     warehouse_count: Optional[int] = None
