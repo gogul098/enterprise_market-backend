@@ -15,7 +15,16 @@ try:
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     pem_file = os.path.join(base_dir, 'LambdaFinancials.pem')
     
-    if os.path.exists(pem_file) and "127.0.0.1:3306" in settings.DATABASE_URL:
+    # Render Support: Write PEM file from environment variable if it doesn't exist
+    if not os.path.exists(pem_file) and os.getenv("SSH_PEM_KEY"):
+        import tempfile
+        pem_file = os.path.join(tempfile.gettempdir(), 'render_ssh.pem')
+        with open(pem_file, "w") as f:
+            # Replace literal \n with actual newlines
+            f.write(os.getenv("SSH_PEM_KEY").replace("\\n", "\n"))
+        os.chmod(pem_file, 0o400) # Required for SSH keys
+
+    if os.path.exists(pem_file) and "127.0.0.1" in settings.DATABASE_URL:
         # Start tunnel on an ephemeral/free port
         tunnel = SSHTunnelForwarder(
             (db_host_ip, 22),
@@ -29,6 +38,9 @@ try:
         print(f"[*] SSH Tunnel started successfully on 127.0.0.1:{tunnel.local_bind_port}")
 except Exception as e:
     print(f"[!] Warning: SSH Tunnel failed to start. Error: {e}")
+    if os.getenv("SSH_PEM_KEY"):
+        # If we are on Render and it failed, crash loudly so we can see the exact SSH error
+        raise RuntimeError(f"SSH Tunnel failed to start on Render: {e}") from e
 
 engine = create_engine(
     db_url,
